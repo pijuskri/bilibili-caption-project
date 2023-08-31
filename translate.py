@@ -1,5 +1,7 @@
 import os
 import deepl
+import paddle
+paddle.utils.run_check()
 api_key = os.environ['deepl_token']
 
 translator = deepl.Translator(api_key)
