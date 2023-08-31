@@ -1,16 +1,18 @@
 import tkinter as tk
 from tkinter import *
 import pyautogui
-
+from test import perform_ocr
 import datetime
 
 
 def take_bounded_screenshot(x1, y1, x2, y2):
     image = pyautogui.screenshot(region=(x1, y1, x2, y2))
+    perform_ocr(image)
     file_name = datetime.datetime.now().strftime("%f")
-    image.save(file_name + ".png")
+    #image.save(file_name + ".png")
 
 
+#https://stackoverflow.com/questions/49901928/how-to-take-a-screenshot-with-python-using-a-click-and-drag-method-like-snipping
 class Application():
     def __init__(self, master):
         self.snip_surface = None
@@ -31,6 +33,9 @@ class Application():
 
         self.snipButton = Button(self.buttonBar, width=5, height=5, command=self.create_screen_canvas, background="green")
         self.snipButton.pack()
+
+        self.translateButton = Button(self.buttonBar, width=5, height=5, command=self.create_screen_canvas,background="red")
+        self.translateButton.pack()
 
         self.master_screen = Toplevel(root)
         self.master_screen.withdraw()

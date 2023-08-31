@@ -1,3 +1,8 @@
-# paddleocr>=2.0.1
+paddlepaddle==2.5.1
+paddleocr>=2.0.1
+numpy
 pyautogui
 tk
+Pillow
+opencv-python
+deepl
