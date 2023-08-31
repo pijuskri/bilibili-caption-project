@@ -16,3 +16,6 @@ tk
 Pillow
 opencv-python
 deepl
+dxcam
+fuzzychinese
+scikit-learn

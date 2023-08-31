@@ -1,0 +1,1 @@
+_ctypes.COMError: (-2005270524): https://github.com/ra1nty/DXcam/issues/38

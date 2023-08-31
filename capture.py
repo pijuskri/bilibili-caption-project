@@ -1,15 +1,23 @@
 import tkinter as tk
 from tkinter import *
 import pyautogui
-from test import perform_ocr
 import datetime
+import dxcam
+from PIL import Image
+import logging
+import threading
+import time
+from collections import deque
+from fuzzychinese import FuzzyChineseMatch
+import re
+
+from translate import translate
+from test import perform_ocr
+
+camera = dxcam.create()
 
 
-def take_bounded_screenshot(x1, y1, x2, y2):
-    image = pyautogui.screenshot(region=(x1, y1, x2, y2))
-    perform_ocr(image)
-    file_name = datetime.datetime.now().strftime("%f")
-    #image.save(file_name + ".png")
+
 
 
 #https://stackoverflow.com/questions/49901928/how-to-take-a-screenshot-with-python-using-a-click-and-drag-method-like-snipping
@@ -21,8 +29,11 @@ class Application():
         self.start_y = None
         self.current_x = None
         self.current_y = None
+        self.message_queue = deque()
+        self.detected_text_list = []
+        self.translated_text_list = []
 
-        root.geometry('400x50+200+200')  # set new geometry
+        #root.geometry('400x50+200+200')  # set new geometry
         root.title('Lil Snippy')
 
         self.menu_frame = Frame(master)
@@ -31,11 +42,19 @@ class Application():
         self.buttonBar = Frame(self.menu_frame, bg="")
         self.buttonBar.pack()
 
-        self.snipButton = Button(self.buttonBar, width=5, height=5, command=self.create_screen_canvas, background="green")
-        self.snipButton.pack()
+        self.snipButton = Button(self.buttonBar, padx=1, width=4, height=1, command=self.create_screen_canvas, background="blue")
+        self.snipButton.pack(fill=tk.Y, side=tk.LEFT)
 
-        self.translateButton = Button(self.buttonBar, width=5, height=5, command=self.create_screen_canvas,background="red")
-        self.translateButton.pack()
+        self.translateButton = Button(self.buttonBar, padx=1, width=4, height=1, command=self.start_ocr,background="green")
+        self.translateButton.pack(fill=tk.Y, side=tk.LEFT)
+
+        self.stopButton = Button(self.buttonBar, padx=1, width=4, height=1, command=self.stop_ocr, background="red")
+        self.stopButton.pack(fill=tk.Y, side=tk.LEFT)
+
+        self.text = tk.Label(text="here are many variations of passages of Lorem Ipsum available, but the gamer zone",
+                             wraplength=480, width=30, height=3, pady=1, font=("Arial", 16))
+
+        self.text.pack(expand=True)
 
         self.master_screen = Toplevel(root)
         self.master_screen.withdraw()
@@ -62,21 +81,22 @@ class Application():
     def on_button_release(self, event):
         self.display_rectangle_position()
 
-        if self.start_x <= self.current_x and self.start_y <= self.current_y:
-            print("right down")
-            take_bounded_screenshot(self.start_x, self.start_y, self.current_x - self.start_x, self.current_y - self.start_y)
-
-        elif self.start_x >= self.current_x and self.start_y <= self.current_y:
-            print("left down")
-            take_bounded_screenshot(self.current_x, self.start_y, self.start_x - self.current_x, self.current_y - self.start_y)
-
-        elif self.start_x <= self.current_x and self.start_y >= self.current_y:
-            print("right up")
-            take_bounded_screenshot(self.start_x, self.current_y, self.current_x - self.start_x, self.start_y - self.current_y)
-
-        elif self.start_x >= self.current_x and self.start_y >= self.current_y:
-            print("left up")
-            take_bounded_screenshot(self.current_x, self.current_y, self.start_x - self.current_x, self.start_y - self.current_y)
+        self.start_capture(self.start_x, self.start_y, self.current_x, self.current_y)
+        #if self.start_x <= self.current_x and self.start_y <= self.current_y:
+        #    print("right down")
+        #    take_bounded_screenshot(self.start_x, self.start_y, self.current_x - self.start_x, self.current_y - self.start_y)
+#
+        #elif self.start_x >= self.current_x and self.start_y <= self.current_y:
+        #    print("left down")
+        #    take_bounded_screenshot(self.current_x, self.start_y, self.start_x - self.current_x, self.current_y - self.start_y)
+#
+        #elif self.start_x <= self.current_x and self.start_y >= self.current_y:
+        #    print("right up")
+        #    take_bounded_screenshot(self.start_x, self.current_y, self.current_x - self.start_x, self.start_y - self.current_y)
+#
+        #elif self.start_x >= self.current_x and self.start_y >= self.current_y:
+        #    print("left up")
+        #    take_bounded_screenshot(self.current_x, self.current_y, self.start_x - self.current_x, self.start_y - self.current_y)
 
         self.exit_screenshot_mode()
         return event
@@ -98,13 +118,81 @@ class Application():
         self.snip_surface.coords(1, self.start_x, self.start_y, self.current_x, self.current_y)
 
     def display_rectangle_position(self):
-        print(self.start_x)
-        print(self.start_y)
-        print(self.current_x)
-        print(self.current_y)
+        pass
+        #print(self.start_x)
+        #print(self.start_y)
+        #print(self.current_x)
+        #print(self.current_y)
 
+    def start_capture(self, x1, y1, x2, y2):
+        x1 = int(x1)
+        y1 = int(y1)
+        x1, x2 = (int(min(x1, x2)), int(max(x1, x2)))
+        y1, y2 = (int(min(y1, y2)), int(max(y1, y2)))
+
+        # image = pyautogui.screenshot(region=(x1, y1, x2, y2))
+        camera.stop()
+        camera.start(region=(x1, y1, x2, y2), target_fps=10, video_mode=True)
+        #
+
+    def handle_capture(self):
+        x = 0
+        while camera.is_capturing and x<100000:
+            x += 1
+            try:
+                image = camera.get_latest_frame()  # Will block until new frame available
+            except TypeError:
+                continue
+            #image =
+            #Image.fromarray(image).save("capture.png")
+            detected_text = perform_ocr(image, debug=True)
+            if len(detected_text) == 0:
+                continue
+
+            sim = 0
+            if len(self.detected_text_list) >= 1:
+                if len(self.detected_text_list) >= 2:
+                    recent = self.detected_text_list[-2:]
+                else:
+                    recent = [self.detected_text_list[-1]]
+                fcm = FuzzyChineseMatch(ngram_range=(3, 3), analyzer='stroke')
+                fcm.fit(recent)
+                fcm.transform([detected_text], n=2)
+                sim = max(fcm.get_similarity_score()[0])
+
+            if len(self.detected_text_list) <= 0 or sim < 0.93:
+                self.detected_text_list.append(detected_text)
+                translated_text = translate(detected_text)
+                #translated_text = ""
+                self.translated_text_list.append(translated_text)
+                self.message_queue.append(translated_text)
+
+    def start_ocr(self):
+        if camera.is_capturing:
+            x = threading.Thread(target=self.handle_capture, args=())
+            x.setDaemon(True)
+            x.start()
+        else:
+            print("Camera is not capturing!")
+        # x.join()
+
+    def stop_ocr(self):
+        camera.stop()
+    def consume_text(self):
+        try:
+            self.text["text"] = self.message_queue.popleft()
+        except (IndexError, tk.TclError):
+            pass  # Ignore, if no text available.
+        # Reschedule call to consumeText.
+        root.after(ms=100, func=self.consume_text)
 
 if __name__ == '__main__':
     root = Tk()
     app = Application(root)
+    app.consume_text()
     root.mainloop()
+    camera.stop()
+    file_name = "translations/"+datetime.datetime.now().strftime("%Y_%m_%d-%H_%M") + "-translog.txt"
+    with open(file_name, 'w', encoding="utf-8") as fp:
+        text = [app.detected_text_list[i] + ":" + app.translated_text_list[i] for i in range(len(app.detected_text_list))]
+        fp.write('\n'.join(text))

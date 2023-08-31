@@ -184,5 +184,6 @@ fabric.properties
 # idea folder, uncomment if you don't need it
 # .idea
 
-
+capture.png
 result.jpg
+translations/*

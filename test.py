@@ -15,7 +15,8 @@ from paddleocr import PaddleOCR,draw_ocr
 ocr = PaddleOCR(use_angle_cls=True, lang='ch', use_space_char=False) # need to run only once to download and load model into memory
 img_path = './data/test.png'
 
-def perform_ocr(image):
+
+def perform_ocr(image, debug=False):
     if isinstance(image, str):
         image = Image.open(img_path).convert('RGB')
     image_arr = np.asarray(image)
@@ -31,23 +32,34 @@ def perform_ocr(image):
         #image_decode = base64.b64decode(data_base64)
         #img_array = np.frombuffer(image_decode, np.uint8)
         #image = cv2.imdecode(img_array, cv2.IMREAD_COLOR)
-    result = ocr.ocr(image_arr, cls=True)
+    try:
+        result = ocr.ocr(image_arr, cls=False)
+    except IndexError: #ignore error for unrecognised character
+        return ""
+    out_str = ''
     for idx in range(len(result)):
         res = result[idx]
         for line in res:
-            print(line)
+            if debug:
+                print(line)
+            conf = line[1][1]
+            if conf > 0.9:
+                out_str = ''.join([out_str, line[1][0]])
+    #if len(result) > 0:
+    #    out_str = ''.join(result[0][1][0])
 
 
     # draw result
+    if debug:
+        result = result[0]
 
-    result = result[0]
+        boxes = [line[0] for line in result]
+        txts = [line[1][0] for line in result]
+        scores = [line[1][1] for line in result]
+        im_show = draw_ocr(image, boxes, txts, scores, font_path='./data/chinese_cht.ttf')
+        im_show = Image.fromarray(im_show)
+        im_show.save('result.jpg')
+    return out_str
 
-    boxes = [line[0] for line in result]
-    txts = [line[1][0] for line in result]
-    scores = [line[1][1] for line in result]
-    im_show = draw_ocr(image, boxes, txts, scores, font_path='./data/chinese_cht.ttf')
-    im_show = Image.fromarray(im_show)
-    im_show.save('result.jpg')
-
-if __name__ == '__main__':
-    perform_ocr(img_path)
+#if __name__ == '__main__':
+perform_ocr(img_path)
