@@ -12,12 +12,20 @@ from fuzzychinese import FuzzyChineseMatch
 import re
 
 from translate import translate
-from test import perform_ocr
+from ocr import perform_ocr
+from variables import OCR_DEBUG
 
 camera = dxcam.create()
 
 
 
+def filter_chinese(context, keep_numbers=True):
+    if keep_numbers:
+        filtrate = re.compile(u'[^\u4E00-\u9FA51234567890]') # non-Chinese unicode range
+    else:
+        filtrate = re.compile(u'[^\u4E00-\u9FA5]')  # non-Chinese unicode range
+    context = filtrate.sub(r'', context) # remove all non-Chinese characters
+    return context
 
 
 #https://stackoverflow.com/questions/49901928/how-to-take-a-screenshot-with-python-using-a-click-and-drag-method-like-snipping
@@ -143,10 +151,10 @@ class Application():
                 image = camera.get_latest_frame()  # Will block until new frame available
             except TypeError:
                 continue
-            #image =
-            #Image.fromarray(image).save("capture.png")
-            detected_text = perform_ocr(image, debug=True)
-            if len(detected_text) == 0:
+
+            detected_text = perform_ocr(image, debug=OCR_DEBUG)
+            detected_text = filter_chinese(detected_text)
+            if len(filter_chinese(detected_text, keep_numbers=False)) == 0:
                 continue
 
             sim = 0
@@ -155,15 +163,16 @@ class Application():
                     recent = self.detected_text_list[-2:]
                 else:
                     recent = [self.detected_text_list[-1]]
+
+                recent = [filter_chinese(x, keep_numbers=False) for x in recent]
                 fcm = FuzzyChineseMatch(ngram_range=(3, 3), analyzer='stroke')
                 fcm.fit(recent)
-                fcm.transform([detected_text], n=2)
+                fcm.transform([filter_chinese(detected_text, keep_numbers=False)], n=2)
                 sim = max(fcm.get_similarity_score()[0])
 
             if len(self.detected_text_list) <= 0 or sim < 0.93:
                 self.detected_text_list.append(detected_text)
                 translated_text = translate(detected_text)
-                #translated_text = ""
                 self.translated_text_list.append(translated_text)
                 self.message_queue.append(translated_text)
 
@@ -192,7 +201,8 @@ if __name__ == '__main__':
     app.consume_text()
     root.mainloop()
     camera.stop()
+
     file_name = "translations/"+datetime.datetime.now().strftime("%Y_%m_%d-%H_%M") + "-translog.txt"
     with open(file_name, 'w', encoding="utf-8") as fp:
-        text = [app.detected_text_list[i] + ":" + app.translated_text_list[i] for i in range(len(app.detected_text_list))]
+        text = [app.detected_text_list[i] + " : " + app.translated_text_list[i] for i in range(len(app.detected_text_list))]
         fp.write('\n'.join(text))

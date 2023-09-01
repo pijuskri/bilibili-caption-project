@@ -4,6 +4,9 @@ from io import BytesIO
 import cv2
 import numpy as np
 from paddleocr import PaddleOCR,draw_ocr
+
+from variables import OCR_DEBUG
+
 # Paddleocr supports Chinese, English, French, German, Korean and Japanese.
 # You can set the parameter `lang` as `ch`, `en`, `fr`, `german`, `korean`, `japan`
 # to switch the language model in order.
@@ -12,7 +15,7 @@ from paddleocr import PaddleOCR,draw_ocr
 #rec_model_dir = "/root/.paddleocr/whl/rec/ch/ch_PP-OCRv4_rec_infer/"
 
 #https://pypi.org/project/paddleocr/
-ocr = PaddleOCR(use_angle_cls=True, lang='ch', use_space_char=False) # need to run only once to download and load model into memory
+ocr = PaddleOCR(use_angle_cls=True, lang='ch', use_space_char=False, show_log=OCR_DEBUG) # need to run only once to download and load model into memory
 img_path = './data/test.png'
 
 

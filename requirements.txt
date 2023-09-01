@@ -4,10 +4,9 @@
 #https://www.codeproject.com/Tips/5347636/Getting-PaddleOCR-and-PaddlePaddle-to-work-in-Wind
 
 --find-links https://www.paddlepaddle.org.cn/whl/windows/mkl/avx/stable.html
-paddlepaddle-gpu==2.5.1.post117
-#paddlepaddle-gpu==2.5.1.post120
+paddlepaddle-gpu==2.4.2.post117
+#paddlepaddle-gpu==2.5.1.post117
 #paddlepaddle-gpu==2.3.2.post116
-#
 paddleocr>=2.0.1
 
 numpy
@@ -19,3 +18,13 @@ deepl
 dxcam
 fuzzychinese
 scikit-learn
+argostranslate
+transformers
+sacremoses
+
+#reinstall if this doesnt work
+--pre
+--index-url https://download.pytorch.org/whl/cu117
+torch
+torchvision
+torchaudio
