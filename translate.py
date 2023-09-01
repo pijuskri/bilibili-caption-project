@@ -5,8 +5,6 @@ import deepl
 import argostranslate.package
 import argostranslate.translate
 
-
-
 from variables import TRANSLATE_TYPE
 
 translate_type = TRANSLATE_TYPE
@@ -16,12 +14,12 @@ if translate_type == 'helsinki':
     from transformers import MarianMTModel, MarianTokenizer
     import torch
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
     model_name = "Helsinki-NLP/opus-mt-zh-en"
     tokenizer = MarianTokenizer.from_pretrained(model_name)
-
     model = MarianMTModel.from_pretrained(model_name).to(device)
-    model.generate(**tokenizer("记得先交饭钱！好味情更久", return_tensors="pt", padding=True).to(device))
 
+    model.generate(**tokenizer("记得先交饭钱！好味情更久", return_tensors="pt", padding=True).to(device))
 elif translate_type == 'argos':
     from_code = "zh"
     to_code = "en"
@@ -59,7 +57,7 @@ elif translate_type == 'deepl':
             f"Character usage: {usage.character.count} of {usage.character.limit}")
     if usage.document.valid:
         print(f"Document usage: {usage.document.count} of {usage.document.limit}")
-
+print('translator started')
 
 def translate(input_text):
     if translate_type == 'helsinki':

@@ -28,6 +28,8 @@ def filter_chinese(context, keep_numbers=True):
     return context
 
 
+
+
 #https://stackoverflow.com/questions/49901928/how-to-take-a-screenshot-with-python-using-a-click-and-drag-method-like-snipping
 class Application():
     def __init__(self, master):
@@ -42,33 +44,73 @@ class Application():
         self.translated_text_list = []
 
         #root.geometry('400x50+200+200')  # set new geometry
-        root.title('Lil Snippy')
+        #root.title('Bilibili translate project')
+        root.update_idletasks()
+        root.overrideredirect(True)
+        root.attributes('-topmost', True)
 
         self.menu_frame = Frame(master)
-        self.menu_frame.pack(fill=BOTH, expand=YES, padx=1, pady=1)
+        self.menu_frame.pack(fill=BOTH, expand=YES, padx=0, pady=0)
+
+        self.title_bar = Frame(master, bg='darkgreen', relief=tk.RAISED, bd=0)
+        self.title_bar.pack(fill=tk.X, expand=1, side=tk.BOTTOM)
+        self.title_bar.bind("<ButtonPress-1>", self.start_move)
+        self.title_bar.bind("<ButtonRelease-1>", self.stop_move)
+        self.title_bar.bind("<B1-Motion>", self.do_move)
+
+        self.title_label = tk.Label(self.title_bar, text='Bilibili translate project', bg='darkgreen', fg='white')
+        self.title_label.pack(fill=tk.X, side=tk.LEFT, pady=2)
+
+        self.close_label = tk.Label(self.title_bar, text='  X  ', bg='darkgreen', fg='white', relief=tk.SUNKEN)
+        self.close_label.pack(side=tk.RIGHT, pady=2)
+        self.close_label.bind("<Button-1>", quit_app)
+
+        # Create a transparent window
+        #root.wm_attributes('-transparentcolor', '#add123')
+
+        self.text = tk.Label(self.menu_frame, text="",
+                             wraplength=480, width=30, height=3, pady=1, font=("Arial", 16))
+        self.text.pack(expand=True)
+
 
         self.buttonBar = Frame(self.menu_frame, bg="")
         self.buttonBar.pack()
 
-        self.snipButton = Button(self.buttonBar, padx=1, width=4, height=1, command=self.create_screen_canvas, background="blue")
+        self.snipButton = Button(self.buttonBar, padx=1, width=10, height=1, relief=tk.RAISED,
+                                 text="Select region", command=self.create_screen_canvas) #, background="blue"
         self.snipButton.pack(fill=tk.Y, side=tk.LEFT)
 
-        self.translateButton = Button(self.buttonBar, padx=1, width=4, height=1, command=self.start_ocr,background="green")
+        self.translateButton = Button(self.buttonBar, padx=1, width=10, height=1,
+                                      text="Begin translate", command=self.start_ocr, background="green")
         self.translateButton.pack(fill=tk.Y, side=tk.LEFT)
 
-        self.stopButton = Button(self.buttonBar, padx=1, width=4, height=1, command=self.stop_ocr, background="red")
+        self.stopButton = Button(self.buttonBar, padx=1, width=10, height=1,
+                                 text="Stop", command=self.stop_ocr, background="red")
         self.stopButton.pack(fill=tk.Y, side=tk.LEFT)
 
-        self.text = tk.Label(text="here are many variations of passages of Lorem Ipsum available, but the gamer zone",
-                             wraplength=480, width=30, height=3, pady=1, font=("Arial", 16))
 
-        self.text.pack(expand=True)
 
         self.master_screen = Toplevel(root)
         self.master_screen.withdraw()
         self.master_screen.attributes("-transparent", "maroon3")
         self.picture_frame = Frame(self.master_screen, background="maroon3")
         self.picture_frame.pack(fill=BOTH, expand=YES)
+
+
+    def start_move(self, event):
+        self.x = event.x
+        self.y = event.y
+
+    def stop_move(self, event):
+        self.x = None
+        self.y = None
+
+    def do_move(self, event):
+        deltax = event.x - self.x
+        deltay = event.y - self.y
+        x = root.winfo_x() + deltax #event.x_root
+        y = root.winfo_y() + deltay #event.y_root
+        root.geometry(f"+{x}+{y}")
 
     def create_screen_canvas(self):
         self.master_screen.deiconify()
@@ -194,6 +236,11 @@ class Application():
             pass  # Ignore, if no text available.
         # Reschedule call to consumeText.
         root.after(ms=100, func=self.consume_text)
+
+def move_app(e):
+    root.geometry(f'+{e.x_root}+{e.y_root}')
+def quit_app(e):
+    root.quit()
 
 if __name__ == '__main__':
     root = Tk()

@@ -19,6 +19,7 @@ ocr = PaddleOCR(use_angle_cls=True, lang='ch', use_space_char=False, show_log=OC
 img_path = './data/test.png'
 
 
+
 def perform_ocr(image, debug=False):
     if isinstance(image, str):
         image = Image.open(img_path).convert('RGB')
@@ -66,3 +67,4 @@ def perform_ocr(image, debug=False):
 
 #if __name__ == '__main__':
 perform_ocr(img_path)
+print('ocr started')
