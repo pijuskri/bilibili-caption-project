@@ -1,6 +1,4 @@
-#paddlepaddle==2.5.1
-#paddleocr>=2.0.1
-#
+
 #https://www.codeproject.com/Tips/5347636/Getting-PaddleOCR-and-PaddlePaddle-to-work-in-Wind
 
 --find-links https://www.paddlepaddle.org.cn/whl/windows/mkl/avx/stable.html

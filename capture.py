@@ -76,17 +76,17 @@ class Application():
         self.buttonBar = Frame(self.menu_frame, bg="")
         self.buttonBar.pack()
 
-        self.snipButton = Button(self.buttonBar, padx=1, width=10, height=1, relief=tk.RAISED,
+        self.snipButton = Button(self.buttonBar, padx=1, width=12, height=1, relief=tk.RAISED,
                                  text="Select region", command=self.create_screen_canvas) #, background="blue"
-        self.snipButton.pack(fill=tk.Y, side=tk.LEFT)
+        self.snipButton.pack(fill=tk.X, side=tk.LEFT)
 
-        self.translateButton = Button(self.buttonBar, padx=1, width=10, height=1,
-                                      text="Begin translate", command=self.start_ocr, background="green")
-        self.translateButton.pack(fill=tk.Y, side=tk.LEFT)
+        self.translateButton = Button(self.buttonBar, padx=1, width=12, height=1,
+                                      text="Begin translate", command=self.start_ocr)
+        self.translateButton.pack(fill=tk.X, side=tk.LEFT)
 
-        self.stopButton = Button(self.buttonBar, padx=1, width=10, height=1,
-                                 text="Stop", command=self.stop_ocr, background="red")
-        self.stopButton.pack(fill=tk.Y, side=tk.LEFT)
+        self.stopButton = Button(self.buttonBar, padx=1, width=12, height=1,
+                                 text="Stop", command=self.stop_ocr)
+        self.stopButton.pack(fill=tk.X, side=tk.LEFT)
 
 
 
